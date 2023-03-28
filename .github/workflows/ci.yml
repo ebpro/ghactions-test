@@ -36,18 +36,24 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Set up SSH
-        uses: MrSquaare/ssh-setup-action@523473d91581ccbf89565e12b40faba93f2708bd # v1.1.0
+      - name: Set up SSH Node1
+        uses:  MrSquaare/ssh-setup-action@v2
         with:
           host: mbp-bruno
           private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           private-key-name: sshmbp
+      - name: Set up SSH Node2
+        uses:  MrSquaare/ssh-setup-action@v2
+        with:
+          host: pc-bruno-gpu
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          private-key-name: sshpcgpu
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
           buildkitd-flags: --debug
           driver: remote
-          endpoint: ssh://localhost
+          endpoint: ssh://pc-bruno-gpu
           platforms: linux/amd64
           append: |
             - endpoint: ssh://bruno@mbp-bruno
