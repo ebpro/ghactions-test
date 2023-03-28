@@ -46,11 +46,11 @@ jobs:
           driver: docker-container
           driver-opts:
             network=host
-          endpoint: ssh://bruno@pc-bruno-gpu
-          platforms: linux/amd64
+          endpoint: ssh://bruno@mbp-bruno
+          platforms: linux/arm64/v8
           append: |
-            - endpoint: ssh://bruno@mbp-bruno
-              platforms: linux/arm64/v8
+            - endpoint: ssh://bruno@pc-bruno-gpu
+              platforms: linux/amd64
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
