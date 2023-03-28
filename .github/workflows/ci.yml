@@ -53,7 +53,7 @@ jobs:
         with:
           buildkitd-flags: --debug
           driver: remote
-          endpoint: ssh://pc-bruno-gpu
+          endpoint: ssh://bruno@pc-bruno-gpu
           platforms: linux/amd64
           append: |
             - endpoint: ssh://bruno@mbp-bruno
