@@ -41,13 +41,15 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        with:
+        with:        
+          version: v0.10.4
           buildkitd-flags: --debug
           driver: docker-container
-          driver-opts:
+          driver-opts: |
+            image=moby/buildkit:v0.11.5
             network=host
           endpoint: ssh://bruno@mbp-bruno
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           append: |
             - endpoint: ssh://bruno@pc-bruno-gpu
               platforms: linux/amd64
