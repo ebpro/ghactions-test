@@ -48,6 +48,7 @@ jobs:
           buildkitd-flags: |
             --debug 
             --allow-insecure-entitlement network.host
+            --allow-insecure-entitlement security.insecure            
           endpoint: ssh://bruno@pc-bruno-gpu
           platforms: linux/amd64
           append: |
