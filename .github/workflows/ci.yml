@@ -71,8 +71,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=pc-bruno-gpu:8081/"${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}":buildcache
-          cache-to: type=registry,ref=pc-bruno-gpu:8081/"${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}":buildcache,mode=max
+          cache-from: type=registry,ref=chub.famillebruno.net/${{ secrets.PRIVATEHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}:buildcache
+          cache-to: type=registry,ref=chub.famillebruno.net/${{ secrets.PRIVATEHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}:buildcache,mode=max
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
         with:
