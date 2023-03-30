@@ -52,7 +52,7 @@ jobs:
         with:       
           config-inline: |
             [registry."docker.io"]
-              mirrors = [${{ DOCKERHUB_PROXY_HOSTNAME }}]
+              mirrors = [${{ secrets.DOCKERHUB_PROXY_HOSTNAME }}]
           driver-opts: |
             network=host
           buildkitd-flags: |
