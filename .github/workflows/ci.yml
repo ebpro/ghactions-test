@@ -11,6 +11,9 @@ on:
 
 jobs:
   docker:
+    strategy:
+      matrix:
+        ENV: ["", "community", "ultimate"]
     runs-on: [self-hosted, multiarch]
     steps:
       - name: Checkout
@@ -21,6 +24,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4     
         with:
+          flavor: |
+            latest=auto
+            prefix=${{ matrix.ENV }}        
           images: |
             "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}"
           tags: |
@@ -67,6 +73,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
+          build-args: | 
+            ENV=${{ matrix.ENV }}
           context: .
           platforms: |
             linux/amd64
@@ -76,6 +84,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ secrets.PRIVATEHUB_HOSTNAME }}/${{ secrets.PRIVATEHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}:buildcache
           cache-to: type=registry,ref=${{ secrets.PRIVATEHUB_HOSTNAME }}/${{ secrets.PRIVATEHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}:buildcache,mode=max
+      - name: Notify dedicated teams channel of Success
+        uses: dragos-cojocari/ms-teams-notification@v1.0.0
+        if: ${{ success() }}
+        with:
+          github-token: ${{ github.token }} # this will use the runner's token.
+          ms-teams-webhook-uri: ${{ env.MSTEAMS_WEBHOOK }}
+          notification-summary: "Build and Deploy success ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}"
+          notification-color: 28a745
+          timezone: Europe/Paris
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
         with:
