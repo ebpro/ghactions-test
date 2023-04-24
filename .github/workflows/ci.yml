@@ -1,13 +1,22 @@
-name: ci
+name: Multi Arch QEMU CI
 
 on:
-  workflow_dispatch:  
+  workflow_dispatch:
+  schedule:
+    - cron: '1 10 * * *'    
   push:
     branches:
       - 'releases/v*'
       - 'develop'
     tags:
       - 'v*.*.*'
+
+env:
+  MSTEAMS_WEBHOOK: ${{ secrets.MSTEAMS_WEBHOOK }}      
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docker:
@@ -18,18 +27,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
       - name: Set the environment variable
         run: echo REPOSITORY_NAME=${GITHUB_REPOSITORY#*\/} >> $GITHUB_ENV
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4     
         with:
           flavor: |
             latest=auto
-            prefix=${{ matrix.ENV }}        
+            prefix=${{ matrix.ENV }}
           images: |
             "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}"
           tags: |
+            type=schedule,pattern=nightly
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
@@ -37,12 +52,14 @@ jobs:
             type=semver,pattern={{major}}
           labels: |
             org.opencontainers.image.description=A test for Docker CI with Github Actions.            
+
       - name: Login to DockerHub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Login to Private registry
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
@@ -50,49 +67,50 @@ jobs:
           registry: ${{ secrets.PRIVATEHUB_HOSTNAME }}
           username: ${{ secrets.PRIVATEHUB_USERNAME }}
           password: ${{ secrets.PRIVATEHUB_TOKEN }}          
-      - uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:       
           config-inline: |
             [registry."docker.io"]
               mirrors = ["${{ secrets.DOCKERHUB_PROXY_HOSTNAME }}"]
+            [registry."${{ secrets.DOCKERHUB_PROXY_HOSTNAME }}"]
+              http = true              
+              insecure = true
+            [registry."${{ secrets.PRIVATEHUB_HOSTNAME }}"]
+              http = true
+              insecure = true
           driver-opts: |
             network=host
           buildkitd-flags: |
             --debug 
             --allow-insecure-entitlement network.host
-            --allow-insecure-entitlement security.insecure            
-          endpoint: ssh://bruno@pc-bruno-gpu
-          platforms: linux/amd64
-          append: |
-            - endpoint: ssh://bruno@mbp-bruno
-              platforms: linux/arm64/v8
+            --allow-insecure-entitlement security.insecure  
+
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
+          context: .
           build-args: | 
             ENV=${{ matrix.ENV }}
-          context: .
-          platforms: |
-            linux/amd64
-            linux/arm64/v8
+          platforms: linux/amd64,linux/arm64/v8
+#          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ secrets.PRIVATEHUB_HOSTNAME }}/${{ secrets.PRIVATEHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ secrets.PRIVATEHUB_HOSTNAME }}/${{ secrets.PRIVATEHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.PRIVATEHUB_HOSTNAME }}/${{ env.REPOSITORY_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.PRIVATEHUB_HOSTNAME }}/${{ env.REPOSITORY_NAME }}:buildcache,mode=min,compression=zstd
+
       - name: Notify dedicated teams channel of Success
         uses: dragos-cojocari/ms-teams-notification@v1.0.0
         if: ${{ success() }}
         with:
           github-token: ${{ github.token }} # this will use the runner's token.
           ms-teams-webhook-uri: ${{ env.MSTEAMS_WEBHOOK }}
-          notification-summary: "Build and Deploy success ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}"
+          notification-summary: "Build and Deploy success ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}:${{ env.DOCKER_METADATA_OUTPUT_TAGS }}"
           notification-color: 28a745
           timezone: Europe/Paris
+
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
         with:
