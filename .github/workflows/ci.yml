@@ -40,7 +40,7 @@ jobs:
         with:
           flavor: |
             latest=auto
-            prefix=${{ matrix.ENV }}
+            prefix=${{ matrix.ENV }}-
           images: |
             "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}"
           tags: |
