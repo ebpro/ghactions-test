@@ -23,6 +23,8 @@ jobs:
     strategy:
       matrix:
         ENV: ["", "community", "ultimate"]
+    env:
+      ENV: ${{ matrix.ENV }}
     runs-on: [self-hosted, qemu]
     steps:
       - name: Checkout
