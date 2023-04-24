@@ -32,7 +32,8 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Set the environment variable
-        run: echo REPOSITORY_NAME=${GITHUB_REPOSITORY#*\/} >> $GITHUB_ENV
+        run: echo REPOSITORY_NAME=${GITHUB_REPOSITORY#*\/} >> $GITHUB_ENV && \
+             echo TAG_SUFFIX=${ENV:+-$ENV}  >> $GITHUB_ENV
 
       - name: Docker meta
         id: meta
@@ -40,7 +41,7 @@ jobs:
         with:
           flavor: |
             latest=auto
-            suffix=-${{ matrix.ENV }}
+            suffix=-${{ env.TAG_SUFFIX }}
           images: |
             "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY_NAME }}"
           tags: |
