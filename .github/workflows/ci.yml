@@ -8,7 +8,7 @@ on:
       
 jobs:
   build:
-    name: build-sonar-site-upload
+    name: build-push-updaterepo
     uses: ebpro/gh-actions-shared-docker/.github/workflows/ci-shareable-docker-qemu.yml@develop
 
     secrets: inherit
