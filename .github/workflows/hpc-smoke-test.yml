@@ -1,0 +1,16 @@
+name: HPC Smoke Test
+on: workflow_dispatch
+jobs:
+  smoke:
+    runs-on: [self-hosted, linux, hpc, x64]
+    steps:
+      - name: Prove HPC tier
+        run: |
+          echo "=== HPC smoke test ==="
+          echo "hostname: $(hostname)"
+          echo "uname: $(uname -a)"
+          echo "nproc: $(nproc)"
+          echo "user: $(whoami)"
+          echo "SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
+          echo "SLURM_JOBID: ${SLURM_JOBID:-unset}"
+          echo "hello from ouranos"
