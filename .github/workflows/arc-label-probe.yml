@@ -3,6 +3,11 @@ name: ARC label probe
 # label? Both name-probe legs request a selector string that is NOT present in
 # that scale set's declared runnerScaleSetLabels, so a pickup proves the
 # auto-label claim; a permanent "queued" (no runner_name) refutes it.
+# 2026-11-03: + hybrid-x64 leg — with the unified label sets, the fleet-less
+# selector [self-hosted, linux, x64] is a SUBSET of both the org-x64 and the
+# large sets' labels. Does it still trigger a scale-up (2026-08-20 observed it
+# did NOT, under the old per-set labels)? A pickup names the pool that served
+# it; a permanent "queued" reproduces the historical no-scale behaviour.
 # workflow_dispatch only: never runs on push/PR. No secrets are printed.
 on: workflow_dispatch
 permissions: {}
@@ -19,6 +24,8 @@ jobs:
             sel: ["ebpro-org-arm"]
           - leg: control-arm-known-good
             sel: ["self-hosted", "linux", "ebpro-org", "arm64"]
+          - leg: hybrid-x64
+            sel: ["self-hosted", "linux", "x64"]
     runs-on: ${{ matrix.sel }}
     steps:
       - name: Prove which selector picked this job up
