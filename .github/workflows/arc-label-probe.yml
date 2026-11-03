@@ -1,0 +1,29 @@
+name: ARC label probe
+# One-shot diagnostic: does ARC/GitHub register a scale set's NAME as a runner
+# label? Both name-probe legs request a selector string that is NOT present in
+# that scale set's declared runnerScaleSetLabels, so a pickup proves the
+# auto-label claim; a permanent "queued" (no runner_name) refutes it.
+# workflow_dispatch only: never runs on push/PR. No secrets are printed.
+on: workflow_dispatch
+permissions: {}
+jobs:
+  probe:
+    name: "probe ${{ matrix.leg }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - leg: name-label-large
+            sel: ["ebpro-org-large"]
+          - leg: name-label-arm
+            sel: ["ebpro-org-arm"]
+          - leg: control-arm-known-good
+            sel: ["self-hosted", "linux", "ebpro-org", "arm64"]
+    runs-on: ${{ matrix.sel }}
+    steps:
+      - name: Prove which selector picked this job up
+        run: |
+          echo "leg=${{ matrix.leg }}"
+          echo "selector=${{ join(matrix.sel, ' ') }}"
+          echo "runner=${RUNNER_NAME}"
+          echo "arch=${RUNNER_ARCH} os=${RUNNER_OS} host=$(hostname) kernel=$(uname -m)"
